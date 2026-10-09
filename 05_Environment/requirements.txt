@@ -1,0 +1,33 @@
+# ============================================================================
+# Python environment for the Table 4 benchmark
+# Install:  python -m pip install -r requirements.txt
+#
+# The benchmark scripts also record the EXACT resolved versions at run time
+# (package + version, OS, CPU, RAM, Python, zig) in
+# 04_Benchmark/results/main/environment.txt; this file pins minimum versions.
+# ============================================================================
+
+# --- core scientific stack (channel simulation, image I/O, Reed-Solomon) ---
+numpy>=1.24
+scipy>=1.10
+opencv-python>=4.8
+reedsolo>=1.7.0
+psutil>=5.9
+
+# --- DNA-Fountain runtime/build -------------------------------------------
+# encode.py/decode.py use tqdm progress bars; Cython compiles the .pyx
+# modules (python setup.py build_ext --inplace).
+tqdm>=4.65
+Cython>=3.0
+
+# --- DNA-Chain runtime -----------------------------------------------------
+# Windows_DNA_Chain.py imports PyQt5 even in headless use.
+PyQt5>=5.15
+
+# --- C++ build of the DNA Storage Toolkit codec ----------------------------
+# Provides `python -m ziglang c++`, a platform-independent C++17 compiler.
+# Optional: any system C++17 compiler (clang++/g++/MSVC) can be used instead.
+ziglang>=0.13
+
+# --- optional: image metadata table in sample_selected20.py ---------------
+Pillow>=10.0

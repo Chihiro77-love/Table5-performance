@@ -1,0 +1,48 @@
+Method_2: DNA Storage Toolkit
+=============================
+Third-party tool. Official upstream repository:
+
+    https://github.com/DNAStorageToolkit/DNAStorageToolkit
+
+The benchmark uses the "1-encoding-decoding" module of the toolkit
+(encoder.cpp / decoder.cpp; RS(65535,55705) over GF(2^16) built on the
+Schifra Reed-Solomon library).
+
+References:
+    Organick, L., et al., 2018. Random access in large-scale DNA data
+    storage. Nature Biotechnology, 36(3), pp. 242-248.
+    Lin, D., Tabatabaee, Y., Pote, Y. and Jevdjic, D., 2022. Managing
+    reliability skew in DNA storage. ISCA 2022, pp. 482-494.
+
+PROVENANCE
+----------
+The upstream code is NOT redistributed inside this package. During
+reproduction it is fetched (git clone) into:
+
+    02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main/
+
+The exact revision executed is recorded in two complementary ways:
+  1. the upstream git commit id:
+       git -C 02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main rev-parse HEAD
+  2. SHA-256 hashes of every executed source file (*.cpp/*.h/*.hpp in
+     1-encoding-decoding/), written by
+     04_Benchmark/benchmark_scripts/add_source_hashes.py into
+     04_Benchmark/results/main/environment.txt (section "source_file_hashes").
+
+CONTENTS OF THIS FOLDER
+-----------------------
+    bits/stdc++.h   Local portability shim (NOT part of upstream). It is
+                    required to build the C++ sources with zig / libc++
+                    (default on macOS) or any toolchain whose library
+                    does not ship GCC's aggregate header (see
+                    07_Reproduction/reproduction_commands.txt, STEP 2).
+                    Copy it into the cloned
+                    1-encoding-decoding/bits/ directory before compiling.
+                    (With GCC/libstdc++ on Linux the shim is harmless:
+                    it simply includes the system <bits/stdc++.h>.)
+
+Prebuilt binaries are not redistributed; build encoder/decoder
+(encoder.exe/decoder.exe on Windows) from the cloned sources with the
+commands in STEP 2. All algorithmic parameters used are recorded in
+04_Benchmark/benchmark_config.yaml, section
+"method_2_dnastoragetoolkit".

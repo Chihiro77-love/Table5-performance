@@ -1,0 +1,63 @@
+====================================================================
+ BENCHMARK DATASET - PROVENANCE AND EXACT SELECTION
+====================================================================
+
+SOURCE
+------
+USC-SIPI Image Database (Signal and Image Processing Institute,
+University of Southern California), "misc" volume:
+
+    https://sipi.usc.edu/database/
+    direct download: https://sipi.usc.edu/database/misc.zip
+
+The 39 images of the misc volume are used exactly as distributed by
+the database (uncompressed .tiff files; no conversion, resizing or
+re-encoding). The benchmark redistributes only the 20 selected images
+plus the representative image (below); the remaining 19 images of the
+pool are not redistributed and are obtained from the official URL.
+
+CONTENTS OF THIS FOLDER
+-----------------------
+    usc-sipi_4.2.03_mandrill.tif
+        Representative input for the quantitative N-repeat run
+        (standard test image 4.2.03, "Mandrill"/"Baboon",
+        512x512 24-bit RGB TIFF, 786,572 bytes). Byte-identical to
+        random20_images/4.2.03.tiff (same SHA-256).
+
+    random20_images/*.tiff
+        The 20 images randomly selected from the 39-image pool.
+
+    SHA256SUMS.txt
+        SHA-256 hashes of every redistributed image.
+        Verify:  shasum -a 256 -c SHA256SUMS.txt   (macOS/Linux)
+                 certutil -hashfile <file> SHA256   (Windows, compare
+                 against the listed value)
+
+EXACT SELECTION PROCEDURE (reproducible)
+----------------------------------------
+20 images are drawn without replacement from the 39-image pool:
+
+    PRNG:   numpy.random.RandomState (Mersenne Twister, MT19937)
+    seed:   42
+    call:   RandomState(42).choice(39, 20, replace=False)
+
+The selection is implemented and verified by
+04_Benchmark/benchmark_scripts/sample_selected20.py. To re-execute the
+selection from the full 39-image pool:
+
+    1. download https://sipi.usc.edu/database/misc.zip
+    2. unpack it so that the 39 .tiff files are located at
+       01_Datasets/benchmark_dataset/misc_raw/misc/*.tiff
+       (i.e. misc.zip's inner "misc" folder, unchanged)
+    3. run:  python 04_Benchmark/benchmark_scripts/sample_selected20.py
+
+The script asserts that the pool contains exactly 39 .tiff files,
+prints the pool index / image ID / dimensions / size of the 20
+selected images, and verifies that the selected set equals the 20
+files redistributed in random20_images/.
+
+Selected image IDs (pool order is the sorted filename order):
+    4.1.03, 4.1.04, 4.1.05, 4.1.06, 4.1.07,
+    4.2.01, 4.2.03, 4.2.06, 4.2.07,
+    5.1.12, 5.1.13, 5.2.08, 5.2.09, 5.3.01, 5.3.02,
+    7.1.09, boat.512, gray21.512, house, ruler.512

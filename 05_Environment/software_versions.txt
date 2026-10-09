@@ -1,0 +1,79 @@
+====================================================================
+ SOFTWARE VERSIONS AND PROVENANCE RECORD
+====================================================================
+
+This file explains where every version/provenance datum required by
+the benchmark report lives, and how it is produced.
+
+1. PYTHON / PACKAGE VERSIONS
+----------------------------
+Declared (minimum) versions:   requirements.txt
+Conda alternative:             environment.yml
+Exact resolved versions used
+in an actual benchmark run:    04_Benchmark/results/main/environment.txt
+                               -> "packages" (numpy, opencv, scipy,
+                                  reedsolo, psutil), "python", "zig",
+                                  "os", "cpu", "ram_total_bytes"
+
+environment.txt is generated automatically by
+04_Benchmark/benchmark_scripts/run_benchmark.py at the start of every
+run (it queries the running interpreter, so the record always matches
+the interpreter that produced the timings).
+
+2. THIRD-PARTY TOOL REVISIONS (exact software provenance)
+---------------------------------------------------------
+Neither third-party repository is redistributed inside this package
+(licensing/provenance: see 02_Software/*/SOURCE.txt). Each is fetched
+from its official upstream at the commit recorded at run time:
+
+  DNA-Fountain
+    https://github.com/TeamErlich/dna-fountain
+    fetched into: 02_Software/DNA-Fountain/dna-fountain-master/
+    files used:    encode.py, decode.py, fountain.py, glass.py,
+                   droplet.py, robust_solition.py, utils.py,
+                   preprocessing.py, lfsr.py, Colorer.py,
+                   other_screens.py
+
+  DNA Storage Toolkit
+    https://github.com/DNAStorageToolkit/DNAStorageToolkit
+    fetched into: 02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main/
+    files used:    1-encoding-decoding/encoder.cpp, decoder.cpp and
+                   the bundled Schifra reed_solomon headers
+
+The exact revision actually executed is pinned by SHA-256 hashes of
+EVERY executed source file:
+
+    python 04_Benchmark/benchmark_scripts/run_benchmark.py --runs 10
+    python 04_Benchmark/benchmark_scripts/add_source_hashes.py
+
+add_source_hashes.py writes the hashes into
+04_Benchmark/results/main/environment.txt -> "source_file_hashes". The upstream
+git commit id can additionally be recorded with:
+
+    git -C 02_Software/DNA-Fountain/dna-fountain-master rev-parse HEAD
+    git -C 02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main rev-parse HEAD
+
+DNA-Fountain note: the archived snapshot used when the benchmark was
+developed carried Python 3 dependency-compatibility adjustments only
+(no algorithmic change). If the current upstream checkout does not
+build/run under Python 3 as-is, apply only such compatibility fixes
+(print function, xrange -> range, `from sets import Set` -> built-in
+set, iterator .next() -> next(), bytes/str handling in
+preprocessing.py) and record the resulting file hashes; all algorithmic
+parameters remain those in 04_Benchmark/benchmark_config.yaml.
+
+3. DNA-CHAIN (authors' own tool)
+--------------------------------
+Redistributed in full (no network fetch):
+    02_Software/DNA-Chain/Windows_DNA_Chain.py
+    02_Software/DNA-Chain/dna_chain_headless.py
+SHA-256 of both files is likewise written to environment.txt.
+
+4. COMPLETE CLI PARAMETER SET
+-----------------------------
+04_Benchmark/benchmark_config.yaml lists every parameter of every tool.
+
+5. EXECUTION COMMANDS
+---------------------
+07_Reproduction/reproduction_commands.txt (bash for macOS/Linux and
+PowerShell for Windows), from environment creation to Table 4.

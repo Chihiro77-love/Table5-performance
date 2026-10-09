@@ -1,0 +1,20 @@
+# Conda environment for the Table 4 benchmark.
+# Create:   conda env create -f environment.yml
+# Activate: conda activate dna-benchmark
+name: dna-benchmark
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy>=1.24
+  - scipy>=1.10
+  - psutil>=5.9
+  - cython>=3.0
+  - tqdm>=4.65
+  - pip>=23.0
+  - pip:
+      - opencv-python>=4.8
+      - reedsolo>=1.7.0
+      - PyQt5>=5.15
+      - ziglang>=0.13
+      - Pillow>=10.0

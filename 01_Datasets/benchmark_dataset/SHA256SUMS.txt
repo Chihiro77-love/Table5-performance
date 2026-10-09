@@ -1,0 +1,26 @@
+# SHA-256 hashes of the benchmark dataset
+# USC-SIPI Image Database, misc volume (https://sipi.usc.edu/database/)
+# Generated: 2026-10-09
+# Verify with: shasum -a 256 -c SHA256SUMS.txt   (macOS/Linux)
+
+3f590b52279fb59b81906f1e928ae713a5357b1afc1a2017a103adb563fb4494  usc-sipi_4.2.03_mandrill.tif
+3d9cf65ca9a43a674cd7fd80192902458921aa81885a16bdcf9dd738e406af62  random20_images/4.1.03.tiff
+abb652cfa55da20b95941834f8887d0dccfa71e33c94dc16ec0c473111dac15e  random20_images/4.1.04.tiff
+6cecbf11be31a64a8397463b24b32cc753a657a616a80b147c93e4579f4c734e  random20_images/4.1.05.tiff
+f09642b452f6c82bccd1282f45b46e4603630c2863708f27079a676e65c928ef  random20_images/4.1.06.tiff
+ee21b55963d29ed18effeef9a4dc3edc85208d9b79690bf2339c14649dcf41f6  random20_images/4.1.07.tiff
+f27f806d2f5e3d6b66e4223bad6a9fcd38756c715491eafb38c43a9befe89cfd  random20_images/4.2.01.tiff
+3f590b52279fb59b81906f1e928ae713a5357b1afc1a2017a103adb563fb4494  random20_images/4.2.03.tiff
+aa00ff3defadcd99e2e5fb5fbd06d12d6570284822a37186e3f8827f9bb4ca73  random20_images/4.2.06.tiff
+676c21edcc56b517ebd54764d6026d2befe7e15014ec3f0c9e6f2ce1d9ad74bf  random20_images/4.2.07.tiff
+ec07e39dd5a342e91d56852a971d45bd3ec31ccca778ade7ebcfe47a2fc215ac  random20_images/5.1.12.tiff
+92ef9dd86f3c0edbbcdad50d63229d6633df560308b60b96cb045e570be02e18  random20_images/5.1.13.tiff
+000a3e36a04b954cefd86d8ab2ac61676034e6cc9e3c0bbab8aaa95bcff03b93  random20_images/5.2.08.tiff
+b12edcb11e8a816ce431b0bbbb02f91bc8614f5f67d3fa1ffd1067d8dd2ff5f8  random20_images/5.2.09.tiff
+20654c370b0197d5c874a686e07c47642abc953790c5d0da23dacfd301f4a18d  random20_images/5.3.01.tiff
+0fb2a6580c10b58276f403ff03d1736891960cfe2ca021bb1df1f4f7b90ec1b5  random20_images/5.3.02.tiff
+92842996ce10ced24f387e08cde93059be8dde2c4e236848806ec6392d054ab3  random20_images/7.1.09.tiff
+6bc7319b1e3b44ce0b2a571ac39a28bac94437d812057d1afb2cf78ea3a9a35f  random20_images/boat.512.tiff
+f9a0535ab30226a180c8f628425686d54775514afdc3042a806b207198d332c6  random20_images/gray21.512.tiff
+82717baf56d3f48bc4e2767afc9f233e7f595ad150ca91932a4a8daa46b3300f  random20_images/house.tiff
+a084d6811faf1943eecba51837987e754ecc0400e36883fe7b6a17e186c1ff88  random20_images/ruler.512.tiff

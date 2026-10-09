@@ -1,0 +1,201 @@
+====================================================================
+ REPRODUCTION COMMANDS - Normalized Benchmark for Table 4
+====================================================================
+
+All commands run from the package root (the folder containing
+01_Datasets ... 07_Reproduction). No files need to be copied to another
+location; scripts resolve every path relative to the package root.
+
+Platforms:  Section A  macOS / Linux (bash)
+            Section B  Windows (PowerShell)
+
+Runtime estimate note: the DNA-Fountain E2 decode and especially the DNA
+Storage Toolkit encode are the long steps; STEP 4 runs N=10 repetitions
+and takes the most time. For a quick end-to-end smoke test use --runs 1.
+
+--------------------------------------------------------------------
+ OUTPUT LAYOUT (created by the scripts)
+--------------------------------------------------------------------
+Regenerated quantitative outputs (not committed; under 04_Benchmark/results/):
+  results/main/environment.txt          environment + exact versions/provenance
+  results/main/benchmark_runs.csv       every individual run (E1 + E2)
+  results/main/summary.md               mean +/- SD and derived metrics
+  results/main/runs/                    encoded/decoded artifacts per run
+  results/main/table4.md                revised Table 4            (STEP 5)
+  results/main/methods_benchmark.md     revised Methods text       (STEP 5)
+  results/main/response_to_editor.md    point-by-point response    (STEP 5)
+  results/recovered_mandrill/           viewable recovered images  (STEP 6)
+  results/results_<label>/              per-image verification     (STEP 7)
+Committed recovered-image evidence:
+  06_Result/<image_id>/                 20-image recovered evidence(STEP 7)
+
+====================================================================
+ SECTION A. macOS / Linux (bash)
+====================================================================
+
+--------------------------------------------------------------------
+ STEP 0. Fetch the two third-party tools (exact revisions are pinned
+         by git commit + source-file SHA-256 during the run)
+--------------------------------------------------------------------
+   git clone https://github.com/TeamErlich/dna-fountain.git \
+       02_Software/DNA-Fountain/dna-fountain-master
+   git clone https://github.com/DNAStorageToolkit/DNAStorageToolkit.git \
+       02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main
+
+   # record the upstream commits:
+   git -C 02_Software/DNA-Fountain/dna-fountain-master rev-parse HEAD
+   git -C 02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main rev-parse HEAD
+
+   # local libc++ portability shim for the C++ codec (NOT upstream code):
+   cp -R 02_Software/DNA-Storage-Toolkit/bits \
+         02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main/1-encoding-decoding/bits
+
+--------------------------------------------------------------------
+ STEP 1. Create the Python environment
+--------------------------------------------------------------------
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r 05_Environment/requirements.txt
+
+   # alternative (conda):
+   conda env create -f 05_Environment/environment.yml
+   conda activate dna-benchmark
+
+--------------------------------------------------------------------
+ STEP 2. Build the codecs
+--------------------------------------------------------------------
+   # 2a. DNA-Fountain Cython modules
+   (cd 02_Software/DNA-Fountain/dna-fountain-master && \
+        python setup.py build_ext --inplace)
+
+   # 2b. DNA Storage Toolkit C++ encoder/decoder (zig, platform independent)
+   cd 02_Software/DNA-Storage-Toolkit/DNAStorageToolkit-main/1-encoding-decoding
+   python -m ziglang c++ -std=c++17 -O2 -I. encoder.cpp -o encoder
+   python -m ziglang c++ -std=c++17 -O2 -I. decoder.cpp -o decoder
+   cd - >/dev/null
+
+   # alternative with the system compiler (also works):
+   # c++ -std=c++17 -O2 -I. encoder.cpp -o encoder
+   # c++ -std=c++17 -O2 -I. decoder.cpp -o decoder
+
+   # NOTE: upstream DNA-Fountain is Python 2 code. If build/run fails on
+   # Python 3, apply ONLY compatibility fixes (print(), xrange->range,
+   # remove `from sets import Set`, .next()->next(), bytes/str in
+   # preprocessing.py). No algorithmic change; parameters stay as recorded
+   # in 04_Benchmark/benchmark_config.yaml.
+
+--------------------------------------------------------------------
+ STEP 3. Verify the benchmark dataset and (optionally) the sampling
+--------------------------------------------------------------------
+   python 03_Preprocessing/preprocessing_scripts/verify_images.py
+   (cd 01_Datasets/benchmark_dataset && shasum -a 256 -c SHA256SUMS.txt)
+
+   # To reproduce the random 20-of-39 selection from the full pool:
+   #   download https://sipi.usc.edu/database/misc.zip and unzip so that
+   #   the 39 images are at
+   #   01_Datasets/benchmark_dataset/misc_raw/misc/*.tiff
+   python 04_Benchmark/benchmark_scripts/sample_selected20.py
+
+--------------------------------------------------------------------
+ STEP 4. Run the main quantitative benchmark (Table 4; N=10)
+--------------------------------------------------------------------
+   python 04_Benchmark/benchmark_scripts/run_benchmark.py --runs 10
+
+   # quick smoke test:        ... run_benchmark.py --runs 1
+
+--------------------------------------------------------------------
+ STEP 5. Pin source-file provenance and generate the documents
+--------------------------------------------------------------------
+   python 04_Benchmark/benchmark_scripts/add_source_hashes.py
+   python 04_Benchmark/benchmark_scripts/make_table4.py
+
+--------------------------------------------------------------------
+ STEP 6. Recovered images for the representative input (4.2.03)
+--------------------------------------------------------------------
+   python 04_Benchmark/benchmark_scripts/recover_outputs.py
+
+--------------------------------------------------------------------
+ STEP 7. Exact recovery on all 20 randomly selected images
+--------------------------------------------------------------------
+   for f in 01_Datasets/benchmark_dataset/random20_images/*.tiff; do
+     label=$(basename "$f" .tiff)
+     python 04_Benchmark/benchmark_scripts/run_benchmark.py --runs 1 \
+         --image "$f" --label "$label"
+   done
+   python 04_Benchmark/benchmark_scripts/recover_all.py
+
+====================================================================
+ SECTION B. Windows (PowerShell)
+====================================================================
+
+--------------------------------------------------------------------
+ STEP 0. Fetch the two third-party tools
+--------------------------------------------------------------------
+   git clone https://github.com/TeamErlich/dna-fountain.git `
+       02_Software\DNA-Fountain\dna-fountain-master
+   git clone https://github.com/DNAStorageToolkit/DNAStorageToolkit.git `
+       02_Software\DNA-Storage-Toolkit\DNAStorageToolkit-main
+
+   git -C 02_Software\DNA-Fountain\dna-fountain-master rev-parse HEAD
+   git -C 02_Software\DNA-Storage-Toolkit\DNAStorageToolkit-main rev-parse HEAD
+
+   Copy-Item 02_Software\DNA-Storage-Toolkit\bits `
+       02_Software\DNA-Storage-Toolkit\DNAStorageToolkit-main\1-encoding-decoding\bits -Recurse
+
+--------------------------------------------------------------------
+ STEP 1. Create the Python environment
+--------------------------------------------------------------------
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install -r 05_Environment\requirements.txt
+
+   # alternative (conda):
+   conda env create -f 05_Environment\environment.yml
+   conda activate dna-benchmark
+
+--------------------------------------------------------------------
+ STEP 2. Build the codecs
+--------------------------------------------------------------------
+   pushd 02_Software\DNA-Fountain\dna-fountain-master
+   python setup.py build_ext --inplace
+   popd
+
+   pushd 02_Software\DNA-Storage-Toolkit\DNAStorageToolkit-main\1-encoding-decoding
+   python -m ziglang c++ -std=c++17 -O2 -I. encoder.cpp -o encoder.exe
+   python -m ziglang c++ -std=c++17 -O2 -I. decoder.cpp -o decoder.exe
+   popd
+
+   # If the upstream DNA-Fountain code fails on Python 3, apply only the
+   # compatibility fixes listed in Section A, STEP 2.
+
+--------------------------------------------------------------------
+ STEP 3. Verify the benchmark dataset
+--------------------------------------------------------------------
+   python 03_Preprocessing\preprocessing_scripts\verify_images.py
+   Get-FileHash 01_Datasets\benchmark_dataset\usc-sipi_4.2.03_mandrill.tif -Algorithm SHA256
+   # expected: 3f590b52279fb59b81906f1e928ae713a5357b1afc1a2017a103adb563fb4494
+
+--------------------------------------------------------------------
+ STEP 4. Run the main quantitative benchmark (Table 4; N=10)
+--------------------------------------------------------------------
+   python 04_Benchmark\benchmark_scripts\run_benchmark.py --runs 10
+
+--------------------------------------------------------------------
+ STEP 5. Pin source-file provenance and generate the documents
+--------------------------------------------------------------------
+   python 04_Benchmark\benchmark_scripts\add_source_hashes.py
+   python 04_Benchmark\benchmark_scripts\make_table4.py
+
+--------------------------------------------------------------------
+ STEP 6. Recovered images for the representative input (4.2.03)
+--------------------------------------------------------------------
+   python 04_Benchmark\benchmark_scripts\recover_outputs.py
+
+--------------------------------------------------------------------
+ STEP 7. Exact recovery on all 20 randomly selected images
+--------------------------------------------------------------------
+   Get-ChildItem 01_Datasets\benchmark_dataset\random20_images\*.tiff | ForEach-Object {
+     python 04_Benchmark\benchmark_scripts\run_benchmark.py --runs 1 `
+         --image $_.FullName --label $_.BaseName
+   }
+   python 04_Benchmark\benchmark_scripts\recover_all.py

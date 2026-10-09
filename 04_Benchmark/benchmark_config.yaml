@@ -1,0 +1,131 @@
+# ============================================================================
+# benchmark_config.yaml
+# Complete, authoritative parameter record for the normalized Table 4
+# benchmark. Implemented by benchmark_scripts/run_benchmark.py; every value
+# here corresponds to a constant or CLI argument in that script.
+# ============================================================================
+
+dataset:
+  source: "USC-SIPI Image Database, misc volume (https://sipi.usc.edu/database/)"
+  pool_size: 39                       # images in the misc volume
+  selected: 20                        # sampled without replacement
+  sampling:
+    prng: "numpy.random.RandomState (Mersenne Twister MT19937)"
+    seed: 42
+    call: "RandomState(42).choice(39, 20, replace=False)"
+    script: "04_Benchmark/benchmark_scripts/sample_selected20.py"
+  representative_image: "01_Datasets/benchmark_dataset/usc-sipi_4.2.03_mandrill.tif"
+  representative_id: "4.2.03 (Mandrill/Baboon), 512x512 24-bit RGB TIFF"
+  representative_size_bytes: 786572
+  representative_sha256: "3f590b52279fb59b81906f1e928ae713a5357b1afc1a2017a103adb563fb4494"
+  hashes: "01_Datasets/benchmark_dataset/SHA256SUMS.txt"
+  note: >
+    The quantitative N-repeat run uses 4.2.03 (one of the 20); exact
+    recovery is additionally verified for all three methods on all 20
+    images. Whole files are encoded; DNA-Chain binarizes the image
+    (threshold 127) before contour extraction.
+
+runs:
+  n: 10                               # repetitions per condition
+  channel_seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009]
+  encoding: deterministic             # all three encoders are deterministic
+  timing: "wall-clock; process-startup overhead measured separately and subtracted for Python codecs"
+  memory: "peak process-tree RSS, sampled every 5 ms (psutil)"
+  statistics: "mean +/- sample SD over the N runs"
+
+channel:
+  E1: "error-free"
+  E2:
+    substitution_per_nucleotide: 0.001   # 0.1 %
+    strand_dropout: 0.05                  # 5 %, generic codecs only
+    indels: none
+    reads_per_strand: 1                   # coverage 1x
+    rng: "numpy.random.RandomState(seed)"
+    note: >
+      DNA-Chain is evaluated on the substitution-only channel (no dropout):
+      its Reed-Solomon code is intra-strand and the method defines no
+      inter-strand redundancy against strand loss.
+
+# ----------------------------------------------------------------------------
+# Method 1: DNA-Fountain (generic binary codec)
+# ----------------------------------------------------------------------------
+method_1_dnafountain:
+  upstream: "https://github.com/TeamErlich/dna-fountain"
+  entrypoints: ["encode.py", "decode.py"]
+  parameters:                           # distributed defaults; benchmark passes
+    chunk_size_bytes: 24                #   only the flags listed here
+    rs_bytes: 2                         # per-droplet RS(30,28) over GF(2^8)
+    max_homopolymer_run: 4
+    gc_dev: 0.2                         # accepted GC fraction 0.3-0.7
+    alpha: 0.07                         # built-in default (--alpha not passed)
+    delta: 0.05
+    c_dist: 0.1
+    header_size_bytes: 4                # 32-bit LFSR seed
+  oligo:
+    length_nt: 120                      # (4 seed + 24 payload + 2 RS) bytes * 4 nt/byte
+    layout: "4-byte LFSR seed | 24-byte payload | 2-byte RS parity"
+  encode_command: >
+    python encode.py -f <input> -l 24 -m 4 --gc 0.2 --rs 2 --out <out.fasta>
+  decode_command: >
+    python decode.py -f <in.fasta> --header_size 4 --rs 2 -n <K> --gc 0.2
+    -m 4 --size 24 --fasta --out <out.bin>
+  notes: >
+    K = ceil(filesize / 24) chunks. No non-default flags are added. The
+    archived snapshot used for the benchmark carried Python 3
+    dependency-compatibility adjustments only (see
+    02_Software/DNA-Fountain/SOURCE.txt); no algorithmic parameter
+    differs from the distributed defaults.
+
+# ----------------------------------------------------------------------------
+# Method 2: DNA Storage Toolkit (generic binary codec)
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+method_2_dnastoragetoolkit:
+  upstream: "https://github.com/DNAStorageToolkit/DNAStorageToolkit"
+  module: "1-encoding-decoding"
+  code: "RS(65535,55705) over GF(2^16), Schifra Reed-Solomon library, column mapping"
+  entrypoints: ["1-encoding-decoding/encoder.cpp", "1-encoding-decoding/decoder.cpp"]
+  parameters:                           # distributed defaults
+    rs_block_strands: 65535             # fixed block size, independent of file size
+    rs_data_strands: 55705
+    strand_length_nt: 120               # 14 x 8-nt data rows + 8-nt index
+  encode_command: >
+    encoder <input> <EncodedStrands.txt> <filesize_bytes> 0 NA 0
+  decode_command: >
+    decoder <NoisyStrands.txt> <decoded.bin> <filesize_bytes> 0 NA 0
+  positional_arguments: "exact order and meaning of the seven positional arguments is that of the upstream main() in encoder.cpp/decoder.cpp (see the module README)"
+  build:
+    compiler: "zig 0.16.0 (python -m ziglang c++), C++17, -O2; any C++17 compiler works"
+    portability_shim: "02_Software/DNA-Storage-Toolkit/bits/stdc++.h (not upstream)"
+
+# ----------------------------------------------------------------------------
+# Method 3: DNA-Chain (structured/vector image codec)
+# ----------------------------------------------------------------------------
+method_3_dnachain:
+  source: "02_Software/DNA-Chain/Windows_DNA_Chain.py (+ headless wrapper)"
+  pipeline: "binarize (threshold 127) -> region contours -> chain codes -> Huffman -> 5-bit to 3-base mapping -> per-strand RS"
+  parameters:
+    binarization_threshold: 127
+    payload_segment_nt: 150
+    address_index_nt: 6                 # 10 bits, up to 1024 strands
+    file_id_nt: 6                       # 10 bits, MD5-based, up to 1024 files
+    info_block_nt: 162                  # 150 + 6 + 6
+    rs_field: "GF(2^8), reedsolo"
+    rs_nsym_bytes: 10                   # corrects up to 5 symbol errors
+    rs_parity_nt: 48                    # 10 bytes * 8 bits / 5 bits * 3 bases
+    oligo_length_nt: 210                # 162 info + 48 RS parity
+  headless_command_e1: "python dna_chain_headless.py <image>"
+  headless_command_e2: "python dna_chain_headless.py <image> 0.001 <seed> 0.0"
+  side_information:                    # out-of-band sidecar, not synthesized DNA
+    - image dimensions (2 x uint32)
+    - per-contour start point (2 x int32) and chain length (uint32)
+    - Huffman table (symbol + code length + padded code bits per entry)
+    - total payload bit length (uint64)
+
+# ----------------------------------------------------------------------------
+# Derived-metric definitions
+# ----------------------------------------------------------------------------
+definitions:
+  redundancy: "total synthesized nt / (information bits stored in DNA / 2); ECC, indices and file IDs count towards it"
+  recovery_rate: "fraction of runs with exact reconstruction (bit-exact file MD5 for the generic codecs; exact chain-code symbol stream for DNA-Chain)"
+  dnachain_pixel_objective: "with an exact stream, the reconstructed binary image is pixel-identical to the encoder's thresholded image; grayscale/color are discarded by binarization"
