@@ -61,23 +61,24 @@ def run(image_path, sub_error_rate=0.0, rng_seed=0, dropout_rate=0.0):
 
     # ---------------- encode (timed) ----------------
     t0 = time.perf_counter()
-    # 1. Huffman 编码
+    # 1. Huffman coding
     encoded_chaincodes, huffman_codes = dna_chain.encode_chaincodes_with_huffman(chaincodes)
-    # 2. 5-bit → 3-base 映射（先补齐到5的倍数，避免末尾bit丢失）
+    # 2. 5-bit -> 3-base mapping (pad to a multiple of 5 first to avoid
+    #    losing trailing bits)
     pad_bits = (5 - len(encoded_chaincodes) % 5) % 5
     padded_bits = encoded_chaincodes + '0' * pad_bits
     encoded_bases = ""
     for i in range(0, len(padded_bits), 5):
         group = padded_bits[i:i + 5]
         encoded_bases += dna_chain.binary_to_three_bases(group)
-    # 3. RS 纠错码: 分块 + 索引 + 文件ID + RS校验
+    # 3. RS error-correcting code: blocks + index + file ID + RS parity
     oligos, file_id, n_segments = dna_chain.encode_with_rs(encoded_bases, image_path)
     encode_time = time.perf_counter() - t0
     # ---------------- end encode ----------------
 
     payload_bits = len(encoded_chaincodes)
     tail_bits_dropped = payload_bits % 5
-    # 实际寡核苷酸数和总碱基数
+    # actual number of oligos and total nucleotide count
     n_oligos = len(oligos)
     total_nt = sum(len(o) for o in oligos)
 
@@ -85,11 +86,11 @@ def run(image_path, sub_error_rate=0.0, rng_seed=0, dropout_rate=0.0):
 
     # ---------------- decode (timed) ----------------
     t0 = time.perf_counter()
-    # 对寡核苷酸施加信道错误
-    noisy_oligos = list(oligos)  # 先复制一份
+    # apply channel errors to the oligos
+    noisy_oligos = list(oligos)  # work on a copy
     if sub_error_rate > 0.0 or dropout_rate > 0.0:
         rng = np.random.RandomState(rng_seed)
-        # 1. 替换错误
+        # 1. substitution errors
         if sub_error_rate > 0.0:
             corrupted = []
             for ol in noisy_oligos:
@@ -99,21 +100,22 @@ def run(image_path, sub_error_rate=0.0, rng_seed=0, dropout_rate=0.0):
                 arr[mask] = rng.choice(pool, size=int(mask.sum()))
                 corrupted.append(arr.tobytes().decode("ascii"))
             noisy_oligos = corrupted
-        # 2. 链丢失
+        # 2. strand dropout
         if dropout_rate > 0.0:
             n_keep = int(len(noisy_oligos) * (1.0 - dropout_rate) + 0.5)
             keep_idx = rng.choice(len(noisy_oligos), size=n_keep, replace=False)
             noisy_oligos = [noisy_oligos[i] for i in sorted(keep_idx)]
 
-    # RS 纠错解码
+    # RS error-correction decoding
     corrected_bases = dna_chain.decode_with_rs(noisy_oligos, payload_bits, file_id)
 
-    # 从纠错后的碱基序列恢复链码
-    # 截取到原始 payload 对应的碱基数（含编码时补齐的padding）
+    # recover chain codes from the corrected base sequence:
+    # truncate to the number of bases corresponding to the original
+    # payload (including the padding added at encoding time)
     original_payload_nt = ((payload_bits + 4) // 5) * 3
     corrected_payload_bases = corrected_bases[:original_payload_nt]
 
-    # 碱基 → 比特 → 链码
+    # bases -> bits -> chain codes
     bits = ""
     for i in range(0, len(corrected_payload_bases), 3):
         group = corrected_payload_bases[i:i + 3]
@@ -126,12 +128,13 @@ def run(image_path, sub_error_rate=0.0, rng_seed=0, dropout_rate=0.0):
                 b2 = "0" if group[2] in ["A", "G"] else "1"
             bits += b0 + b1 + b2
     bits = bits[:payload_bits]
-    # 补齐5b→3b映射可能丢弃的末尾位（payload_bits % 5 != 0时）
+    # restore trailing bits that the 5b->3b mapping may have dropped
+    # (when payload_bits % 5 != 0)
     if len(bits) < payload_bits:
         bits = bits + '0' * (payload_bits - len(bits))
     decoded_chaincodes = dna_chain.decode_huffman_to_chaincodes(bits, huffman_codes)
 
-    # 分组链码
+    # regroup the chain codes
     grouped = []
     idx = 0
     for chaincode in chaincodes:
