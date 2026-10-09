@@ -85,16 +85,19 @@ Committed recovered-image evidence:
    # in 04_Benchmark/benchmark_config.yaml.
 
 --------------------------------------------------------------------
- STEP 3. Verify the benchmark dataset and (optionally) the sampling
+ STEP 3. Verify the benchmark dataset and the recorded 20-image set
 --------------------------------------------------------------------
    python 03_Preprocessing/preprocessing_scripts/verify_images.py
    (cd 01_Datasets/benchmark_dataset && shasum -a 256 -c SHA256SUMS.txt)
 
-   # To reproduce the random 20-of-39 selection from the full pool:
-   #   download https://sipi.usc.edu/database/misc.zip and unzip so that
-   #   the 39 images are at
-   #   01_Datasets/benchmark_dataset/misc_raw/misc/*.tiff
+   # The 20 images were picked at random without replacement from the
+   # 39-image pool without a recorded seed; the exact set is fixed by the
+   # redistributed files + SHA256SUMS.txt. This verifies their hashes and
+   # (if the pool is present) their membership in the 39-image pool:
    python 04_Benchmark/benchmark_scripts/sample_selected20.py
+   # optional pool: download https://sipi.usc.edu/database/misc.zip and
+   # unzip so the 39 images are at
+   # 01_Datasets/benchmark_dataset/misc_raw/misc/*.tiff
 
 --------------------------------------------------------------------
  STEP 4. Run the main quantitative benchmark (Table 4; N=10)

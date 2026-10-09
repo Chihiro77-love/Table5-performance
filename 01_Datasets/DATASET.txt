@@ -33,28 +33,30 @@ CONTENTS OF THIS FOLDER
                  certutil -hashfile <file> SHA256   (Windows, compare
                  against the listed value)
 
-EXACT SELECTION PROCEDURE (reproducible)
-----------------------------------------
-20 images are drawn without replacement from the 39-image pool:
+SELECTION PROCEDURE
+-------------------
+20 images were picked at random without replacement from the 39-image
+pool. The draw was performed manually without a pseudo-random number
+generator or a recorded seed, so the random draw itself is not
+algorithmically replayable. The OUTCOME of the draw, however, is fixed
+exactly and unambiguously: the 20 redistributed files together with
+their SHA-256 hashes in SHA256SUMS.txt uniquely define the benchmark
+dataset, and all benchmark results refer to these exact bytes.
 
-    PRNG:   numpy.random.RandomState (Mersenne Twister, MT19937)
-    seed:   42
-    call:   RandomState(42).choice(39, 20, replace=False)
+The recorded set is checked by
+04_Benchmark/benchmark_scripts/sample_selected20.py, which:
+  - verifies the SHA-256 hashes of the 20 files against SHA256SUMS.txt
+  - prints image ID / dimensions / size for each of the 20 images
+  - if the full pool is present, asserts it contains exactly 39 .tiff
+    files and that every selected image is a member of that pool
 
-The selection is implemented and verified by
-04_Benchmark/benchmark_scripts/sample_selected20.py. To re-execute the
-selection from the full 39-image pool:
+To run the membership check against the full 39-image pool:
 
     1. download https://sipi.usc.edu/database/misc.zip
     2. unpack it so that the 39 .tiff files are located at
        01_Datasets/benchmark_dataset/misc_raw/misc/*.tiff
        (i.e. misc.zip's inner "misc" folder, unchanged)
     3. run:  python 04_Benchmark/benchmark_scripts/sample_selected20.py
-
-The script asserts that the pool contains exactly 39 .tiff files,
-prints the pool index / image ID / dimensions / size of the 20
-selected images, and verifies that the selected set equals the 20
-files redistributed in random20_images/.
 
 Selected image IDs (pool order is the sorted filename order):
     4.1.03, 4.1.04, 4.1.05, 4.1.06, 4.1.07,

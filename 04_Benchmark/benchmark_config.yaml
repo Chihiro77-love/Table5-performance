@@ -10,10 +10,10 @@ dataset:
   pool_size: 39                       # images in the misc volume
   selected: 20                        # sampled without replacement
   sampling:
-    prng: "numpy.random.RandomState (Mersenne Twister MT19937)"
-    seed: 42
-    call: "RandomState(42).choice(39, 20, replace=False)"
-    script: "04_Benchmark/benchmark_scripts/sample_selected20.py"
+    method: "20 images picked at random without replacement from the 39-image pool"
+    prng: null                          # the draw used no PRNG or recorded seed
+    fixity: "the exact selected set is fixed by the 20 redistributed files and SHA256SUMS.txt"
+    script: "04_Benchmark/benchmark_scripts/sample_selected20.py  # verifies hashes and, if the pool is present, pool membership"
   representative_image: "01_Datasets/benchmark_dataset/usc-sipi_4.2.03_mandrill.tif"
   representative_id: "4.2.03 (Mandrill/Baboon), 512x512 24-bit RGB TIFF"
   representative_size_bytes: 786572
